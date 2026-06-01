@@ -19,10 +19,7 @@ public class QueueService {
         }
         //The Check (Simplified and safer)
         Long newUserId = entry.getUser().getId();
-        boolean isAlreadyInQueue = queueRepository.findAll().stream()
-                .filter(e -> e.getUser() != null && e.getStatus() != null)
-                .anyMatch(e -> e.getUser().getId().equals(newUserId)
-                        && e.getStatus().equalsIgnoreCase("WAITING"));
+        boolean isAlreadyInQueue = queueRepository.existsByUser_IdAndStatusIgnoreCase(newUserId, "WAITING");
 
         if(isAlreadyInQueue){
             throw new RuntimeException("You are already in the queue!");
@@ -30,12 +27,12 @@ public class QueueService {
         long count= queueRepository.count();
         String nextToken ="T-" +(100 +count+1);
         entry.setTokenNumber(nextToken);
-        entry.setStatus("waiting");
+        entry.setStatus("WAITING");
         return queueRepository.save(entry);
     }
 
-    public List<QueueEntry> getQueueByUserId(Long userId) {
-        return queueRepository.findByUser_Id(userId);
+    public List<QueueEntry> getAllActiveQueue() {
+        return queueRepository.findByIsDeletedFalse();
 
     }
 
@@ -51,7 +48,7 @@ public class QueueService {
     }
 
     public int getEstimatedWaitTime(Long userId){
-        List<QueueEntry> waitingQueue = queueRepository.findAll().stream().filter(e-> e.getStatus().equalsIgnoreCase("WAITING")).toList();
+        List<QueueEntry> waitingQueue = queueRepository.findByStatusIgnoreCase("WAITING");
 
         int position=0;
         for(int i=0; i<waitingQueue.size();i++){
@@ -79,10 +76,5 @@ public class QueueService {
         queueRepository.save(entry);
     }
 
-    public List<QueueEntry> getAllActiveQueue(){
-        return queueRepository.findAll().stream().filter(
-                e -> e.isDeleted())
-                .toList();
 
-    }
 }

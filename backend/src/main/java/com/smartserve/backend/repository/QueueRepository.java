@@ -8,5 +8,8 @@ import java.util.List;
 public interface QueueRepository extends JpaRepository<QueueEntry, Long> {
 
     // Change findByUserId to findByUser_Id (The underscore tells JPA to look inside the User object for the ID)
-    List<QueueEntry> findByUser_Id(Long userId);
+    List<QueueEntry> findByIsDeletedFalse();
+    List<QueueEntry> findByStatusIgnoreCase(String status);
+
+    boolean existsByUser_IdAndStatusIgnoreCase(Long userId, String status);
 }
