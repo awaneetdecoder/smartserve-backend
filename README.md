@@ -8,7 +8,7 @@
 
 > The Spring Boot REST API backend for **SmartServe** — a digital queue management system. Handles authentication with JWT, role-based access control, and all queue operations.
 
-**Flutter App Repo:** [smartserve-flutter](https://github.com/awaneetdecoder/smartserve-flutter)
+**Flutter App Repo:** [smart_serve](https://github.com/awaneetdecoder/smart_serve)
 
 ---
 
@@ -133,12 +133,17 @@ cd smartserve-backend
 
 ```sql
 CREATE DATABASE smartserve;
+```
 
--- Create admin user (required for admin dashboard)
+Then create an admin user. First generate a BCrypt hash of your chosen password at [bcrypt-generator.com](https://bcrypt-generator.com), then run:
+
+```sql
 USE smartserve;
 INSERT INTO users (full_name, email, password, role)
-VALUES ('Admin', 'admin@smartserve.com', 'admin123', 'ADMIN');
+VALUES ('Admin', 'admin@smartserve.com', '$2a$10$yourBcryptHashHere', 'ADMIN');
 ```
+
+> ⚠️ Never insert a plaintext password. The app uses BCrypt — always hash first.
 
 ### 3. Configure Environment Variables
 
@@ -150,7 +155,7 @@ cp backend/src/main/resources/application.properties.example \
 
 Set environment variables. In IntelliJ → `Run → Edit Configurations → Environment Variables`:
 ```
-JWT_SECRET=mySecretKeyForSmartServeAppThatIsLongEnough123456
+JWT_SECRET=your_long_secret_key_here
 DB_PASSWORD=your_mysql_root_password
 ```
 
@@ -207,7 +212,6 @@ Tomcat started on port 8080
 
 ## 🔮 Future Improvements
 
-- [ ] BCrypt password hashing
 - [ ] JWT refresh tokens
 - [ ] Email verification
 - [ ] Multi-organisation support
