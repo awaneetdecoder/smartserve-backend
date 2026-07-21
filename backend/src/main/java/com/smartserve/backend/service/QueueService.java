@@ -75,6 +75,8 @@ public class QueueService {
 
         queueRepository.save(entry);
     }
-
+    public List<QueueEntry> getQueueByUserId(Long userId){
+        return queueRepository.findByUser_Id(userId);
+    }
 
 }
