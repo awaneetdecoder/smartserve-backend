@@ -6,25 +6,30 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?style=flat-square&logo=mysql)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-> The Spring Boot REST API backend for **SmartServe** — a digital queue management system. Handles authentication with JWT, role-based access control, and all queue operations.
+> Spring Boot REST API for **SmartServe** — a digital queue management system that replaces physical token systems. Handles JWT authentication, role-based access control, queue token generation, and wait-time estimation.
 
-**Flutter App Repo:** [smartserve-flutter](https://github.com/awaneetdecoder/smartserve-flutter)
-
----
-
-## ✨ Features
-
-- 🔑 JWT authentication (register + login → returns token)
-- 🛡️ Spring Security with stateless sessions
-- 👤 Role-based access control (STUDENT / ADMIN)
-- 🎫 Queue token generation with auto-incrementing numbers (T-101, T-102...)
-- ⏱️ Wait time estimation endpoint
-- 🗑️ Soft delete for cancelled tokens (history preserved)
-- 🌐 CORS configured for Flutter mobile client
+**Flutter App Repo:** [smart_serve](https://github.com/awaneetdecoder/smart_serve)
 
 ---
 
-## 🛠️ Tech Stack
+## Why this exists
+
+Physical token queues (hospitals, government offices, college departments) give no visibility into wait time and no way to manage the queue remotely. This backend exposes a REST API so any frontend — the Flutter app in this case — can let people join a queue digitally and let admins manage it live.
+
+---
+
+## What's actually working
+
+- JWT authentication (register + login), passwords hashed with BCrypt
+- Role-based access control (STUDENT / ADMIN) enforced via Spring Security
+- Queue token generation with auto-incrementing token numbers (T-101, T-102...)
+- **Wait-time estimation calculated from the average serving time per department** — not a static placeholder. See [How wait time is calculated](#how-wait-time-is-calculated) below.
+- Soft delete on cancelled tokens (history preserved, not destroyed)
+- CORS configured for the Flutter mobile client
+
+---
+
+## Tech Stack
 
 | Technology | Version | Purpose |
 |---|---|---|
@@ -38,7 +43,7 @@
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 backend/src/main/java/com/smartserve/backend/
@@ -60,7 +65,7 @@ backend/src/main/java/com/smartserve/backend/
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Auth — Public (no token required)
 
@@ -89,7 +94,13 @@ waiting → CANCELLED (soft delete, isDeleted = true)
 
 ---
 
-## 🗃️ Database Schema
+## How wait time is calculated
+
+Wait time isn't hardcoded. The estimate is derived from the average serving time per department, computed from historical `queue_entries` records for that department, then multiplied by the number of people ahead of the requesting user in the active queue. This means estimates improve as more tokens get served and adapt per department rather than using one fixed number for every queue type.
+
+---
+
+## Database Schema
 
 ```sql
 CREATE TABLE users (
@@ -114,7 +125,7 @@ CREATE TABLE queue_entries (
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Java 17
@@ -133,32 +144,33 @@ cd smartserve-backend
 
 ```sql
 CREATE DATABASE smartserve;
+```
 
--- Create admin user (required for admin dashboard)
+Create an admin user. Generate a BCrypt hash of your chosen password at [bcrypt-generator.com](https://bcrypt-generator.com), then run:
+
+```sql
 USE smartserve;
 INSERT INTO users (full_name, email, password, role)
-VALUES ('Admin', 'admin@smartserve.com', 'admin123', 'ADMIN');
+VALUES ('Admin', 'admin@smartserve.com', '$2a$10$yourBcryptHashHere', 'ADMIN');
 ```
+
+> Never insert a plaintext password. Registration and login both go through BCrypt — always hash before inserting manually.
 
 ### 3. Configure Environment Variables
 
-Copy the example config:
 ```bash
 cp backend/src/main/resources/application.properties.example \
    backend/src/main/resources/application.properties
 ```
 
-Set environment variables. In IntelliJ → `Run → Edit Configurations → Environment Variables`:
+In IntelliJ → `Run → Edit Configurations → Environment Variables`:
 ```
-JWT_SECRET=mySecretKeyForSmartServeAppThatIsLongEnough123456
+JWT_SECRET=your_long_secret_key_here
 DB_PASSWORD=your_mysql_root_password
 ```
 
 ### 4. Run
 
-**IntelliJ:** Click the green ▶ Run button.
-
-**Terminal:**
 ```bash
 cd backend
 ./mvnw spring-boot:run
@@ -172,11 +184,11 @@ Tomcat started on port 8080
 
 ---
 
-## 🔐 How JWT Works in This Project
+## How JWT Works in This Project
 
 ```
 1. Client sends POST /api/auth/login { email, password }
-2. AuthController verifies credentials against MySQL
+2. AuthController verifies credentials against MySQL (BCrypt comparison)
 3. JwtUtil.generateToken() creates signed JWT:
    {
      "sub":    "user@email.com",
@@ -194,7 +206,7 @@ Tomcat started on port 8080
 
 ---
 
-## 🐛 Common Issues
+## Common Issues
 
 | Error | Cause | Fix |
 |---|---|---|
@@ -205,23 +217,31 @@ Tomcat started on port 8080
 
 ---
 
-## 🔮 Future Improvements
+## Honest current limitations
 
-- [ ] BCrypt password hashing
-- [ ] JWT refresh tokens
-- [ ] Email verification
-- [ ] Multi-organisation support
-- [ ] WebSocket for real-time updates
-- [ ] Docker containerization
+- Tested locally and manually — not yet used by real users outside development.
+- No automated test suite yet.
+- No deployment / hosting set up yet — runs locally via Maven or IntelliJ.
 
 ---
 
-## 👨‍💻 Author
+## Roadmap
+
+- [ ] JWT refresh tokens
+- [ ] Email verification
+- [ ] Multi-organisation support
+- [ ] WebSocket for real-time queue updates
+- [ ] Docker containerization
+- [ ] Automated test suite
+
+---
+
+## Author
 
 **Awaneet Mishra** — [@awaneetdecoder](https://github.com/awaneetdecoder)
 
 ---
 
-## 📄 License
+## License
 
 MIT License
